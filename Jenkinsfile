@@ -43,8 +43,14 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([string(credentialsId: 'render-deploy-hook', variable: 'RENDER_HOOK')]) {
-                    sh 'curl -X POST $RENDER_HOOK'
+            withCredentials([string(credentialsId: 'RENDER_API_KEY', variable: 'RENDER_API_KEY')]) {
+                    sh '''
+                    SERVICE_ID=$(echo $RENDER_API_KEY | cut -d'_' -f1)
+                    curl -X POST https://api.render.com/v1/services/$SERVICE_ID/deploys \
+                    -H "Authorization: Bearer $RENDER_API_KEY" \
+                    -H "Content-Type: application/json" \
+                    -d '{"clearCache": true}' \
+                    '''
                 }
             }
         }
