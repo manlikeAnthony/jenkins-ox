@@ -43,12 +43,9 @@ pipeline {
                 }
             }
             steps {
-                // withCredentials([string(credentialsId: 'RENDER_API_KEY', variable: 'RENDER_API_KEY')]) {
-                    sh '''
-                       curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
-                       render --version
-                    '''
-                //}
+                withCredentials([string(credentialsId: 'render-deploy-hook', variable: 'RENDER_HOOK')]) {
+                    sh 'curl -X POST $RENDER_HOOK'
+                }
             }
         }
     }
