@@ -5,7 +5,6 @@ pipeline {
         githubPush()
     }
 
-
     environment {
         BUILD_DIR = "build"
         NPM_CONFIG_CACHE = "${WORKSPACE}/.npm-cache"
