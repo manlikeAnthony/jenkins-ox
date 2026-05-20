@@ -5,8 +5,13 @@ pipeline {
         githubPush()
     }
 
+    environment {
+        BUILD_DIR = "build"
+    }
+
     stages {
-        stage('Build')  {
+
+        stage('Install & Build') {
             agent {
                 docker {
                     image 'node:18-alpine'
@@ -15,16 +20,23 @@ pipeline {
             }
             steps {
                 sh '''
-                ls -la
+                set -e
+
+                echo "Node version"
                 node --version
-                npm --version
-                npm ci --cache /tmp/.npm-cache
+
+                echo "Installing dependencies"
+                npm ci
+
+                echo "Building app"
                 npm run build
-                ls -la
+
+                echo "Checking build output"
+                ls -la build
                 '''
             }
         }
-        
+
         stage('Test') {
             agent {
                 docker {
@@ -34,38 +46,40 @@ pipeline {
             }
             steps {
                 sh '''
-                test -f build/index.html
+                set -e
+
+                echo "Running tests"
                 CI=true npm test
                 '''
             }
         }
 
-        stage('Deploy to Render') {
-            agent {
-                docker {
-                    image 'node:18'
-                    reuseNode true
-                }
-            }
+        stage('Deploy to Netlify') {
             steps {
-            withCredentials([string(credentialsId: 'NETLIFY_JENKINS_HOOK', variable: 'NETLIFY_JENKINS_HOOK')]) {
+                withCredentials([string(credentialsId: 'NETLIFY_JENKINS_HOOK', variable: 'HOOK')]) {
                     sh '''
-                    curl -X POST -d {} https://api.netlify.com/build_hooks/6a0c3a7f23b138b60075df8e
+                    set -e
+
+                    echo "Deploying to Netlify..."
+
+                    curl -X POST "$HOOK"
                     '''
                 }
             }
         }
     }
-    post{
+
+    post {
         always {
-            junit 'test-results/junit.xml'
+            echo "Pipeline finished"
         }
+
         success {
-            echo 'Pipeline completed - app deployed to Render'
+            echo "Build passed and deployed successfully"
         }
+
         failure {
-            echo 'Pipeline failed - deployment to Render did not occur'
+            echo "Pipeline failed"
         }
     }
-
 }
