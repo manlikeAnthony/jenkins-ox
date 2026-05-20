@@ -1,10 +1,10 @@
 pipeline {
     agent any
 
-    // triggers {
-    //     githubPush()
-    // }
-    
+    triggers {
+        githubPush()
+    }
+
 
     environment {
         BUILD_DIR = "build"
