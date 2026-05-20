@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    triggers {
-        githubPush()
-    }
+    // triggers {
+    //     githubPush()
+    // }
 
     environment {
         BUILD_DIR = "build"
@@ -76,7 +76,7 @@ pipeline {
 
                 echo "Archiving build artifacts"
                 ls -la build
-                
+
                 '''
             }
         }
