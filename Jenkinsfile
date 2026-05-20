@@ -76,6 +76,7 @@ pipeline {
 
                 echo "Archiving build artifacts"
                 ls -la build
+                
                 '''
             }
         }
