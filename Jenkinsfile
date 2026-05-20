@@ -7,11 +7,12 @@ pipeline {
 
     environment {
         BUILD_DIR = "build"
+        NPM_CONFIG_CACHE = "${WORKSPACE}/.npm-cache"
     }
 
     stages {
 
-        stage('Install & Build') {
+        stage('Install') {
             agent {
                 docker {
                     image 'node:18-alpine'
@@ -26,12 +27,26 @@ pipeline {
                 node --version
 
                 echo "Installing dependencies"
-                npm ci
+                npm ci --cache "$NPM_CONFIG_CACHE"
+                '''
+            }
+        }
+
+        stage('Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                set -e
 
                 echo "Building app"
                 npm run build
 
-                echo "Checking build output"
+                echo "Verifying build output"
                 ls -la build
                 '''
             }
@@ -54,6 +69,17 @@ pipeline {
             }
         }
 
+        stage('Archive Build') {
+            steps {
+                sh '''
+                set -e
+
+                echo "Archiving build artifacts"
+                ls -la build
+                '''
+            }
+        }
+
         stage('Deploy to Netlify') {
             steps {
                 withCredentials([string(credentialsId: 'NETLIFY_JENKINS_HOOK', variable: 'HOOK')]) {
@@ -61,7 +87,6 @@ pipeline {
                     set -e
 
                     echo "Deploying to Netlify..."
-
                     curl -X POST "$HOOK"
                     '''
                 }
